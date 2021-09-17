@@ -1,0 +1,5 @@
+{"destinations": [
+    {"environment": "Dev","server":"servername"},
+    {"environment": "Dev","server":"servername"},
+    {"environment": "Dev","server":"servername"}
+]}

@@ -1,0 +1,138 @@
+function prepareProject(){
+    Param
+    (
+         
+        [Parameter(Mandatory=$true)] [string]  $destinationServer,
+        [Parameter(Mandatory=$true)] [string]  $destination
+     
+    )
+    
+    Write-Host $destinationServer + "and" + $destination
+
+    if(-not(Test-Path "\\$destinationServer\$destination"))
+    {
+        Write-Host "Creating new folder...... "
+        New-Item  -Path "\\$server\$destination" -ItemType Directory
+    }
+    else {
+        Write-Output "Delete contents of \\$destinationServer\$destination"
+        foreach ($Item in Get-Childitem "\\$destinationServer\$destination")      
+            {
+                Write-Output "Delete" $item.fullname
+                Remove-item $item.fullname -Recurse -Force
+
+            }
+       
+                   
+    }
+     
+     
+}
+
+function deployhProjectInternal(){
+    Param
+    (
+         [Parameter(Mandatory=$true)] [string]  $nuveenbusiness_api,
+         [Parameter(Mandatory=$true)] [string]  $destinationServer,
+         [Parameter(Mandatory=$true)] [string]  $destination
+     
+        
+    )
+
+    Write-Host "Running deployhProject()"
+    Write-Host "Copying from $ nuveenebusiness_contactus_api to \\$destinationServer\$destination"
+    Copy-Item -Path $nuveenbusiness_api -Destination \\$destinationServer\$destination -force -Recurse
+        
+   
+}
+
+function deployhProjectExternal(){
+    Param
+    (
+         
+         [Parameter(Mandatory=$true)] [string]  $nuveenebusiness_contactus_api,
+         [Parameter(Mandatory=$true)] [string]  $nuveenebusiness_nuveendata_api,
+         [Parameter(Mandatory=$true)] [string]  $destinationServer,
+         [Parameter(Mandatory=$true)] [string]  $destination
+             
+    )
+    Write-Host "Running deployhProjectExternal()"
+
+    Write-Host "Copying from $ nuveenebusiness_contactus_api to \\$destinationServer\$destination"
+
+    #Write-Output "Install new files to "
+    #& robocopy "$chocolateyPackageFolder\bin: " $AppinstallPath /R:2 /S | Write-Output
+   
+    Copy-Item -Path $nuveenebusiness_contactus_api -Destination \\$destinationServer\$destination  -force -Recurse
+    Copy-Item -Path $nuveenebusiness_nuveendata_api -Destination \\$destinationServer\$destination  -force -Recurse
+    
+   
+}
+write-host "test 1"
+# command line call: `choco install <pkg_id> --params "'/LICENSE:value'"`
+$pp = Get-PackageParameters
+$pp.keys
+
+$pp.values
+
+
+if (!$pp['DeployEnvironment']) { throw "Must supply a DeployEnvironment in the choco install arguments as foll
+choco install <ssis package name> --params /DeployEnvironment:<val>'"" where '<val>' is DEV, UAT or PROD for SSIS packages
+REF: https://chocolatey.org/docs/how-to-parse-package-parameters-argument" }
+
+
+$service_nuveenebusiness_api="$env:chocolateyPackageFolder\Nuveen.EBusiness.API"
+$service_nuveenebusiness_contactus_api="$env:chocolateyPackageFolder\Nuveen.EBusiness.ContactUs.API"
+$service_nuveenebusiness_nuveendata_api="$env:chocolateyPackageFolder\Nuveen.EBusiness.NuveenData.API"
+
+$DeployEnv = $pp['DeployEnvironment']
+Write-Host "DeployEnv is $DeployEnv"           
+#choco install abc --params "'/DeployEnvironment:UAT' '/DeployTarget:Internal'"
+
+$DeployTarget = $pp['DeployTarget']
+Write-Host "DeployTarget is $DeployTarget"
+
+$jsonfile = "$env:chocolateyPackageFolder\bin\destinationServers.json"
+
+if (Test-Path $jsonfile) {
+  Write-Host "Found $jsonfile"
+  $json= Get-Content -Raw -Path $jsonfile | ConvertFrom-Json
+foreach ($line in $json.destinations){
+
+     if (($line.environment -eq ($DeployEnv+$DeployTarget)) -and ($DeployTarget -eq "Internal")) {
+             $ds=[string]$line.server
+             Write-Host $ds
+             $Destinationfolder = "E:\output"
+             prepareProject $ds $Destinationfolder
+             deployhProjectInternal $service_nuveenebusiness_api  $ds $Destinationfolder
+
+    }
+    elseif  (($line.environment -eq ($DeployEnv+$DeployTarget)) -and ($DeployTarget -eq "External")) {
+             $ds=[string]$line.server
+             Write-Host $ds
+             $Destinationfolder = "E:\output"
+            prepareProject $ds $Destinationfolder
+            deployhProjectExternal  $service_nuveenebusiness_contactus_api $service_nuveenebusiness_nuveendata_api $ds $Destinationfolder
+
+    }
+
+    elseif  (($line.environment -eq "Dev") -and ($DeployEnv -eq "Dev")) {
+             $ds=[string]$line.server
+             Write-Host $ds
+             $Destinationfolder = "E:\output"
+            prepareProject $ds $Destinationfolder
+            deployhProjectInternal $service_nuveenebusiness_api  $ds $Destinationfolder
+            deployhProjectExternal  $service_nuveenebusiness_contactus_api $service_nuveenebusiness_nuveendata_api $ds $Destinationfolder
+
+    }
+   
+
+
+  }
+}
+
+
+
+
+
+
