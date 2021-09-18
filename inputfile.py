@@ -89,20 +89,29 @@ divide (a,b)
 """
 # write function which makes a character uppercase and lowercase
 
-"""
-print("enter a char")
-a = input()
-def uppercase() :
+
+
+
+
+def uppercase(x) :
       
     print("Converting to uppercase")
-    print (a.upper())
+    print (x.upper())
     
-def lowercase() :
+def lowercase(y) :
      print("Converting to lowercase" )    
-     print(a.lower())
+     print(y.lower())
+     
+def giveinput() :
+    print("enter a char")
+    a = input()
+    #a="abhishek"
+    uppercase(a)  
+    lowercase(a)
     
-uppercase()    
-lowercase()
+giveinput()    
+   
+
   
 """""
 # Compare whether it is a charecter or string
@@ -113,6 +122,9 @@ a = input()
 
 if a.isstring :
     print ("true")
+
+"""""    
+    
     
 
 
